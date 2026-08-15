@@ -1,0 +1,13 @@
+en:
+  project_module_task_weight: "Task Weight"
+  permission_manage_task_weight_rules: "Manage task weight rules"
+  permission_view_task_weight_report: "View workload distribution report"
+  field_task_weight: "Task Weight"
+  label_task_weight: "Weight"
+  label_task_weight_settings: "Task Weight"
+  label_task_weight_report: "Workload Distribution"
+  text_weight_report_description: "Accumulated weight summary of open tasks per assignee."
+  label_total_weight: "Total Weight (Score)"
+  label_weight_percentage: "Workload %"
+  label_unassigned: "Unassigned"
+  error_weight_field_not_found: "Custom field 'Peso de la Tarea' not found."

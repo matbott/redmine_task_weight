@@ -1,0 +1,62 @@
+<% 
+  all_settings = Setting.plugin_redmine_task_weight || {}
+  p_settings = (all_settings['project_rules'] || {})[@project.id.to_s] || {}
+  current_mode = p_settings['mode'] || 'priority'
+  project_rules = p_settings['rules'] || {}
+%>
+
+<%= form_tag(project_task_weight_settings_path(@project), method: :post, class: "tabular") do %>
+  <div class="box">
+    <h3>Modo de Cálculo para <%= @project.name %></h3>
+    <p>
+      <label>
+        <%= radio_button_tag 'mode', 'priority', current_mode == 'priority' %>
+        <strong>Por Prioridad General</strong>
+      </label>
+      <br>
+      <label>
+        <%= radio_button_tag 'mode', 'rules', current_mode == 'rules' %>
+        <strong>Matriz Avanzada (Tracker + Categoría + Prioridad)</strong>
+      </label>
+    </p>
+  </div>
+
+  <div class="box">
+    <h3>Matriz de Reglas de Peso (Score)</h3>
+    <p class="description">Asigna el peso automático para las tareas de este proyecto:</p>
+
+    <table class="list">
+      <thead>
+        <tr>
+          <th>Tipo (Tracker)</th>
+          <th>Categoría</th>
+          <th>Prioridad</th>
+          <th>Peso (Score)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @project.trackers.each do |tracker| %>
+          <% categories = @project.issue_categories.any? ? @project.issue_categories : [nil] %>
+          <% categories.each do |cat| %>
+            <% IssuePriority.active.each do |prio| %>
+              <% cat_id = cat ? cat.id : '0' %>
+              <% rule_key = "trk_#{tracker.id}_cat_#{cat_id}_prio_#{prio.id}" %>
+              <tr>
+                <td><strong><%= tracker.name %></strong></td>
+                <td><%= cat ? cat.name : '<i>(Sin categoría)</i>'.html_safe %></td>
+                <td><%= prio.name %></td>
+                <td>
+                  <%= text_field_tag "rules[#{rule_key}]", 
+                        project_rules[rule_key] || '1.0', 
+                        size: 5, style: "text-align: center;" %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= submit_tag l(:button_save), class: 'button-positive' %>
+<% end %>

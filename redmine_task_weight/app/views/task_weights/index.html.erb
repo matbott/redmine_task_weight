@@ -1,0 +1,45 @@
+<h2><%= l(:label_task_weight_report) %> - <%= @project.name %></h2>
+
+<p class="subtitle"><%= l(:text_weight_report_description) %></p>
+
+<% if @user_weights.any? %>
+  <table class="list">
+    <thead>
+      <tr>
+        <th><%= l(:field_assigned_to) %></th>
+        <th style="text-align: center;"><%= l(:label_issue_plural) %> Abiertas</th>
+        <th style="text-align: right;"><%= l(:label_total_weight) %></th>
+        <th style="text-align: right;"><%= l(:label_weight_percentage) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% total_project_weight = @user_weights.values.sum { |v| v[:total_weight] } %>
+      <% @user_weights.each do |user_name, data| %>
+        <% pct = total_project_weight > 0 ? (data[:total_weight] / total_project_weight * 100).round(1) : 0 %>
+        <tr class="<%= cycle('odd', 'even') %>">
+          <td><strong><%= user_name %></strong></td>
+          <td style="text-align: center;"><%= data[:issue_count] %></td>
+          <td style="text-align: right;"><%= '%.1f' % data[:total_weight] %></td>
+          <td style="text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+              <span><%= pct %>%</span>
+              <div style="background-color: #e0e0e0; width: 80px; height: 10px; border-radius: 4px; overflow: hidden;">
+                <div style="background-color: #1677ff; width: <%= pct %>%; height: 100%;"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr style="font-weight: bold; background-color: #f6f8fa;">
+        <td><%= l(:label_total) %></td>
+        <td style="text-align: center;"><%= @user_weights.values.sum { |v| v[:issue_count] } %></td>
+        <td style="text-align: right;"><%= '%.1f' % total_project_weight %></td>
+        <td style="text-align: right;">100%</td>
+      </tr>
+    </tfoot>
+  </table>
+<% else %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>

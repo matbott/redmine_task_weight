@@ -1,0 +1,290 @@
+<% 
+  all_settings = (settings || {}).with_indifferent_access
+  p_rules = all_settings[:project_rules] || {}
+  projects = Project.active.order(:name)
+  all_custom_fields = IssueCustomField.order(:name)
+%>
+
+<style type="text/css">
+  .tw-container {
+    font-family: inherit;
+    color: #1e293b;
+    max-width: 1100px;
+  }
+  .tw-container label {
+    float: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    text-align: left !important;
+    font-weight: normal !important;
+  }
+  .tw-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .tw-section-title {
+    margin: 0 0 12px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #0f172a;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 8px;
+  }
+  .tw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+  }
+  .tw-subcard {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 15px;
+  }
+  .tw-subcard h5 {
+    margin: 0 0 10px 0;
+    font-size: 0.95em;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .tw-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+  .tw-table th {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .tw-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 0.9em;
+  }
+  .tw-table tr:last-child td {
+    border-bottom: none;
+  }
+  .tw-input-num {
+    width: 65px;
+    text-align: center;
+    padding: 4px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 0.95em;
+  }
+  .tw-radio-group {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .tw-radio-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+</style>
+
+<div class="tw-container">
+  <div class="tw-card">
+    <h3 class="tw-section-title">Configuración de Pesos de Tarea por Proyecto (Fórmula Factorial)</h3>
+    <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.95em;">
+      Selecciona un proyecto para configurar sus factores multiplicadores de peso (Score).<br>
+      Fórmula: <code>Peso = Factor Tracker &times; Factor Categoría &times; Factor Prioridad &times; Factor Campo Extra</code>
+    </p>
+
+    <% if projects.any? %>
+      <div style="margin-bottom: 20px;">
+        <label for="task_weight_project_select" style="font-weight: 600 !important; margin-right: 10px !important;">Seleccionar Proyecto:</label>
+        <select id="task_weight_project_select" onchange="showProjectRules(this.value);" style="font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;">
+          <% projects.each_with_index do |project, idx| %>
+            <option value="<%= project.id %>"><%= project.name %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <% projects.each_with_index do |project, idx| %>
+        <% 
+          p_setting = (p_rules[project.id] || p_rules[project.id.to_s] || {}).with_indifferent_access
+          current_mode = p_setting[:mode] || 'factorial'
+          tracker_factors = p_setting[:tracker_factors] || {}
+          category_factors = p_setting[:category_factors] || {}
+          priority_factors = p_setting[:priority_factors] || {}
+          custom_field_id = p_setting[:custom_field_id].to_s
+          custom_field_factors = p_setting[:custom_field_factors] || {}
+        %>
+        <div id="project_rules_<%= project.id %>" class="project-rules-block" style="<%= idx == 0 ? '' : 'display: none;' %>">
+          
+          <!-- Modo de cálculo -->
+          <div class="tw-subcard" style="margin-bottom: 15px;">
+            <h5 style="margin-bottom: 6px;">Modo de Cálculo</h5>
+            <div class="tw-radio-group">
+              <label class="tw-radio-item">
+                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'factorial', current_mode == 'factorial' %>
+                <span><strong>Fórmula Factorial (Multiplicativa)</strong></span>
+              </label>
+              <label class="tw-radio-item">
+                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'priority', current_mode == 'priority' %>
+                <span>Por Prioridad General (Posición)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Campo Personalizado Adicional -->
+          <div class="tw-subcard" style="margin-bottom: 15px;">
+            <h5 style="margin-bottom: 4px;">Campo Personalizado Adicional (Opcional)</h5>
+            <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.88em;">
+              Si seleccionas un campo de tipo Lista o Numérico (ej: Complejidad, Puntos), se incluirá como factor multiplicador.
+            </p>
+            <%= select_tag "settings[project_rules][#{project.id}][custom_field_id]", 
+                  options_for_select([["(Ninguno)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, custom_field_id),
+                  onchange: "toggleCustomFieldFactors(#{project.id}, this.value);",
+                  style: "padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" %>
+          </div>
+
+          <!-- Tres columnas con tablas de factores -->
+          <div class="tw-grid">
+            <!-- Factores por Tracker -->
+            <div class="tw-subcard">
+              <h5>1. Factores por Tracker</h5>
+              <% if project.trackers.any? %>
+                <table class="tw-table">
+                  <thead>
+                    <tr><th>Tracker</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                  </thead>
+                  <tbody>
+                    <% project.trackers.each do |tracker| %>
+                      <tr>
+                        <td><strong><%= tracker.name %></strong></td>
+                        <td style="text-align: center;">
+                          <%= text_field_tag "settings[project_rules][#{project.id}][tracker_factors][#{tracker.id}]", 
+                                tracker_factors[tracker.id.to_s] || '1.0', class: 'tw-input-num' %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              <% else %>
+                <p style="color: #94a3b8; font-size: 0.9em; margin: 0;">No hay trackers configurados en este proyecto.</p>
+              <% end %>
+            </div>
+
+            <!-- Factores por Categoría -->
+            <div class="tw-subcard">
+              <h5>2. Factores por Categoría</h5>
+              <table class="tw-table">
+                <thead>
+                  <tr><th>Categoría</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><i>(Sin Categoría)</i></td>
+                    <td style="text-align: center;">
+                      <%= text_field_tag "settings[project_rules][#{project.id}][category_factors][0]", 
+                            category_factors['0'] || '1.0', class: 'tw-input-num' %>
+                    </td>
+                  </tr>
+                  <% project.issue_categories.each do |cat| %>
+                    <tr>
+                      <td><%= cat.name %></td>
+                      <td style="text-align: center;">
+                        <%= text_field_tag "settings[project_rules][#{project.id}][category_factors][#{cat.id}]", 
+                              category_factors[cat.id.to_s] || '1.0', class: 'tw-input-num' %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Factores por Prioridad -->
+            <div class="tw-subcard">
+              <h5>3. Factores por Prioridad</h5>
+              <table class="tw-table">
+                <thead>
+                  <tr><th>Prioridad</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                </thead>
+                <tbody>
+                  <% IssuePriority.active.each do |prio| %>
+                    <tr>
+                      <td><%= prio.name %></td>
+                      <td style="text-align: center;">
+                        <%= text_field_tag "settings[project_rules][#{project.id}][priority_factors][#{prio.id}]", 
+                              priority_factors[prio.id.to_s] || prio.position.to_f.to_s, class: 'tw-input-num' %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Factores por Campo Personalizado Adicional -->
+          <% all_custom_fields.each do |cf| %>
+            <% next unless cf.field_format == 'list' && cf.possible_values.any? %>
+            <div id="cf_factors_<%= project.id %>_<%= cf.id %>" class="cf-factors-block-<%= project.id %>" style="<%= custom_field_id == cf.id.to_s ? '' : 'display: none;' %> margin-top: 20px;" class="tw-subcard">
+              <div class="tw-subcard">
+                <h5>4. Factores para Opciones de "<%= cf.name %>"</h5>
+                <table class="tw-table" style="max-width: 450px;">
+                  <thead>
+                    <tr><th>Opción de Texto</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                  </thead>
+                  <tbody>
+                    <% cf.possible_values.each do |val| %>
+                      <tr>
+                        <td><strong><%= val %></strong></td>
+                        <td style="text-align: center;">
+                          <%= text_field_tag "settings[project_rules][#{project.id}][custom_field_factors][#{cf.id}][#{val}]", 
+                                (custom_field_factors[cf.id.to_s] || {})[val] || '1.0', class: 'tw-input-num' %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% end %>
+
+        </div>
+      <% end %>
+
+      <script type="text/javascript">
+        function showProjectRules(projectId) {
+          var blocks = document.querySelectorAll('.project-rules-block');
+          blocks.forEach(function(b) { b.style.display = 'none'; });
+          var target = document.getElementById('project_rules_' + projectId);
+          if (target) { target.style.display = 'block'; }
+        }
+
+        function toggleCustomFieldFactors(projectId, cfId) {
+          var cfBlocks = document.querySelectorAll('.cf-factors-block-' + projectId);
+          cfBlocks.forEach(function(b) { b.style.display = 'none'; });
+          if (cfId) {
+            var target = document.getElementById('cf_factors_' + projectId + '_' + cfId);
+            if (target) { target.style.display = 'block'; }
+          }
+        }
+      </script>
+    <% else %>
+      <p style="color: #94a3b8;">No hay proyectos activos en Redmine.</p>
+    <% end %>
+  </div>
+</div>
