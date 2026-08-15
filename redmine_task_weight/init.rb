@@ -54,15 +54,15 @@ Rails.configuration.after_initialize do
     if CustomField.table_exists?
       field_name = 'Peso de la Tarea'
 
-      unless IssueCustomField.exists?(name: field_name)
+      unless IssueCustomField.exists?(name: ['Peso de la Tarea', 'Task Weight', 'Peso', 'Weight'])
         IssueCustomField.create!(
           name: field_name,
           field_format: 'float',
           is_required: false,
-          is_for_all: true,
+          is_for_all: false,
           is_filter: true,
           visible: false, # Oculto para usuarios comunes (anti-trampas)
-          default_value: '1.0',
+          default_value: '1',
           description: 'Campo oculto administrado automáticamente por redmine_task_weight'
         )
         Rails.logger.info "[redmine_task_weight] CustomField '#{field_name}' creado automáticamente."
@@ -72,4 +72,5 @@ Rails.configuration.after_initialize do
     Rails.logger.error "[redmine_task_weight] Error al verificar CustomField: #{e.message}"
   end
 end
+
 

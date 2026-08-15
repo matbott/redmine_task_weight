@@ -47,6 +47,12 @@
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     padding: 15px;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+  .tw-subcard.disabled-block {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(80%);
   }
   .tw-subcard h5 {
     margin: 0 0 10px 0;
@@ -100,25 +106,50 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    transition: background 0.15s ease;
+  }
+  .tw-radio-item:hover {
+    background: #f1f5f9;
+  }
+  .tw-notice {
+    padding: 12px 16px;
+    border-radius: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    font-size: 0.92em;
+    margin-top: 15px;
   }
 </style>
 
 <div class="tw-container">
   <div class="tw-card">
-    <h3 class="tw-section-title">Configuración de Pesos de Tarea por Proyecto (Fórmula Factorial)</h3>
+    <h3 class="tw-section-title">Configuración de Pesos de Tarea por Proyecto</h3>
     <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.95em;">
-      Selecciona un proyecto para configurar sus factores multiplicadores de peso (Score).<br>
-      Fórmula: <code>Peso = Factor Tracker &times; Factor Categoría &times; Factor Prioridad &times; Factor Campo Extra</code>
+      Selecciona un proyecto para configurar el modo de cálculo. Se desactivarán visualmente los campos que no correspondan.
     </p>
 
     <% if projects.any? %>
-      <div style="margin-bottom: 20px;">
-        <label for="task_weight_project_select" style="font-weight: 600 !important; margin-right: 10px !important;">Seleccionar Proyecto:</label>
-        <select id="task_weight_project_select" onchange="showProjectRules(this.value);" style="font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;">
-          <% projects.each_with_index do |project, idx| %>
-            <option value="<%= project.id %>"><%= project.name %></option>
-          <% end %>
-        </select>
+      <div style="margin-bottom: 20px; display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
+        <div>
+          <label for="task_weight_project_select" style="font-weight: 600 !important; margin-right: 10px !important;">Seleccionar Proyecto:</label>
+          <select id="task_weight_project_select" onchange="showProjectRules(this.value);" style="font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;">
+            <% projects.each_with_index do |project, idx| %>
+              <option value="<%= project.id %>"><%= project.name %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div>
+          <label for="settings_weight_custom_field_id" style="font-weight: 600 !important; margin-right: 10px !important;">Campo Destino del Peso:</label>
+          <%= select_tag "settings[weight_custom_field_id]",
+                options_for_select([["(Auto: Peso de la Tarea / Task Weight)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, all_settings[:weight_custom_field_id].to_s),
+                style: "font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;" %>
+        </div>
       </div>
 
       <% projects.each_with_index do |project, idx| %>
@@ -133,23 +164,34 @@
         %>
         <div id="project_rules_<%= project.id %>" class="project-rules-block" style="<%= idx == 0 ? '' : 'display: none;' %>">
           
-          <!-- Modo de cálculo -->
+          <!-- Modo de cálculo (3 Opciones) -->
           <div class="tw-subcard" style="margin-bottom: 15px;">
-            <h5 style="margin-bottom: 6px;">Modo de Cálculo</h5>
+            <h5 style="margin-bottom: 8px;">Modo de Cálculo para <%= project.name %></h5>
             <div class="tw-radio-group">
               <label class="tw-radio-item">
-                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'factorial', current_mode == 'factorial' %>
+                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'factorial', current_mode == 'factorial',
+                      onchange: "updateModeUI(#{project.id}, 'factorial');" %>
                 <span><strong>Fórmula Factorial (Multiplicativa)</strong></span>
               </label>
               <label class="tw-radio-item">
-                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'priority', current_mode == 'priority' %>
-                <span>Por Prioridad General (Posición)</span>
+                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'priority', current_mode == 'priority',
+                      onchange: "updateModeUI(#{project.id}, 'priority');" %>
+                <span><strong>Solo por Prioridad</strong></span>
               </label>
+              <label class="tw-radio-item" style="border-color: #f59e0b; background: #fffbeb;">
+                <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'manual', current_mode == 'manual',
+                      onchange: "updateModeUI(#{project.id}, 'manual');" %>
+                <span style="color: #b45309;"><strong>Modo Manual Puro (Sin Autocálculo)</strong></span>
+              </label>
+            </div>
+
+            <div id="notice_manual_<%= project.id %>" class="tw-notice" style="<%= current_mode == 'manual' ? '' : 'display: none;' %>">
+              ✍️ <strong>Modo Manual Activo:</strong> Las tareas de este proyecto NO se calcularán automáticamente. Cada tarea conservará únicamente el peso ingresado a mano por los usuarios autorizados.
             </div>
           </div>
 
           <!-- Campo Personalizado Adicional -->
-          <div class="tw-subcard" style="margin-bottom: 15px;">
+          <div id="block_custom_field_<%= project.id %>" class="tw-subcard" style="margin-bottom: 15px;">
             <h5 style="margin-bottom: 4px;">Campo Personalizado Adicional (Opcional)</h5>
             <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.88em;">
               Si seleccionas un campo de tipo Lista o Numérico (ej: Complejidad, Puntos), se incluirá como factor multiplicador.
@@ -163,7 +205,7 @@
           <!-- Tres columnas con tablas de factores -->
           <div class="tw-grid">
             <!-- Factores por Tracker -->
-            <div class="tw-subcard">
+            <div id="block_tracker_<%= project.id %>" class="tw-subcard">
               <h5>1. Factores por Tracker</h5>
               <% if project.trackers.any? %>
                 <table class="tw-table">
@@ -188,7 +230,7 @@
             </div>
 
             <!-- Factores por Categoría -->
-            <div class="tw-subcard">
+            <div id="block_category_<%= project.id %>" class="tw-subcard">
               <h5>2. Factores por Categoría</h5>
               <table class="tw-table">
                 <thead>
@@ -216,7 +258,7 @@
             </div>
 
             <!-- Factores por Prioridad -->
-            <div class="tw-subcard">
+            <div id="block_priority_<%= project.id %>" class="tw-subcard">
               <h5>3. Factores por Prioridad</h5>
               <table class="tw-table">
                 <thead>
@@ -228,7 +270,7 @@
                       <td><%= prio.name %></td>
                       <td style="text-align: center;">
                         <%= text_field_tag "settings[project_rules][#{project.id}][priority_factors][#{prio.id}]", 
-                              priority_factors[prio.id.to_s] || prio.position.to_f.to_s, class: 'tw-input-num' %>
+                              priority_factors[prio.id.to_s] || prio.position.to_s, class: 'tw-input-num' %>
                       </td>
                     </tr>
                   <% end %>
@@ -240,7 +282,7 @@
           <!-- Factores por Campo Personalizado Adicional -->
           <% all_custom_fields.each do |cf| %>
             <% next unless cf.field_format == 'list' && cf.possible_values.any? %>
-            <div id="cf_factors_<%= project.id %>_<%= cf.id %>" class="cf-factors-block-<%= project.id %>" style="<%= custom_field_id == cf.id.to_s ? '' : 'display: none;' %> margin-top: 20px;" class="tw-subcard">
+            <div id="cf_factors_<%= project.id %>_<%= cf.id %>" class="cf-factors-block-<%= project.id %>" style="<%= custom_field_id == cf.id.to_s ? '' : 'display: none;' %> margin-top: 20px;">
               <div class="tw-subcard">
                 <h5>4. Factores para Opciones de "<%= cf.name %>"</h5>
                 <table class="tw-table" style="max-width: 450px;">
@@ -271,7 +313,44 @@
           var blocks = document.querySelectorAll('.project-rules-block');
           blocks.forEach(function(b) { b.style.display = 'none'; });
           var target = document.getElementById('project_rules_' + projectId);
-          if (target) { target.style.display = 'block'; }
+          if (target) { 
+            target.style.display = 'block'; 
+            var checkedMode = target.querySelector('input[name^="settings[project_rules][' + projectId + '][mode]"]:checked');
+            if (checkedMode) {
+              updateModeUI(projectId, checkedMode.value);
+            }
+          }
+        }
+
+        function updateModeUI(projectId, mode) {
+          var blockTracker = document.getElementById('block_tracker_' + projectId);
+          var blockCategory = document.getElementById('block_category_' + projectId);
+          var blockPriority = document.getElementById('block_priority_' + projectId);
+          var blockCustomField = document.getElementById('block_custom_field_' + projectId);
+          var noticeManual = document.getElementById('notice_manual_' + projectId);
+          var cfBlocks = document.querySelectorAll('.cf-factors-block-' + projectId);
+
+          if (mode === 'factorial') {
+            if (blockTracker) blockTracker.classList.remove('disabled-block');
+            if (blockCategory) blockCategory.classList.remove('disabled-block');
+            if (blockPriority) blockPriority.classList.remove('disabled-block');
+            if (blockCustomField) blockCustomField.classList.remove('disabled-block');
+            if (noticeManual) noticeManual.style.display = 'none';
+          } else if (mode === 'priority') {
+            if (blockTracker) blockTracker.classList.add('disabled-block');
+            if (blockCategory) blockCategory.classList.add('disabled-block');
+            if (blockPriority) blockPriority.classList.remove('disabled-block');
+            if (blockCustomField) blockCustomField.classList.add('disabled-block');
+            if (noticeManual) noticeManual.style.display = 'none';
+            cfBlocks.forEach(function(b) { b.style.display = 'none'; });
+          } else if (mode === 'manual') {
+            if (blockTracker) blockTracker.classList.add('disabled-block');
+            if (blockCategory) blockCategory.classList.add('disabled-block');
+            if (blockPriority) blockPriority.classList.add('disabled-block');
+            if (blockCustomField) blockCustomField.classList.add('disabled-block');
+            if (noticeManual) noticeManual.style.display = 'block';
+            cfBlocks.forEach(function(b) { b.style.display = 'none'; });
+          }
         }
 
         function toggleCustomFieldFactors(projectId, cfId) {
@@ -282,6 +361,11 @@
             if (target) { target.style.display = 'block'; }
           }
         }
+
+        document.addEventListener("DOMContentLoaded", function() {
+          var sel = document.getElementById('task_weight_project_select');
+          if (sel) { showProjectRules(sel.value); }
+        });
       </script>
     <% else %>
       <p style="color: #94a3b8;">No hay proyectos activos en Redmine.</p>

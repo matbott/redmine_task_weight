@@ -1,9 +1,15 @@
 <% 
   project = @project || (@issue ? @issue.project : nil)
   if project && project.module_enabled?(:task_weight)
-    weight_field = IssueCustomField.find_by(name: 'Peso de la Tarea') || IssueCustomField.find_by(name: 'Peso')
+    all_settings = (Setting.plugin_redmine_task_weight || {}).with_indifferent_access
+    target_id = all_settings[:weight_custom_field_id]
+
+    weight_field = (target_id.present? ? IssueCustomField.find_by(id: target_id.to_i) : nil) || 
+                   IssueCustomField.find_by(name: 'Peso de la Tarea') || 
+                   IssueCustomField.find_by(name: 'Task Weight') || 
+                   IssueCustomField.find_by(name: 'Peso') || 
+                   IssueCustomField.find_by(name: 'Weight')
     if weight_field
-      all_settings = (Setting.plugin_redmine_task_weight || {}).with_indifferent_access
       project_rules_all = all_settings[:project_rules] || {}
       p_rules = (project_rules_all[project.id] || project_rules_all[project.id.to_s] || {}).with_indifferent_access
 %>
@@ -12,8 +18,15 @@
       var projectRules = <%= p_rules.to_json.html_safe %>;
       var weightFieldId = <%= weight_field.id.to_json.html_safe %>;
 
+      function formatWeightVal(val) {
+        var rounded = Math.round(val * 100) / 100;
+        return (rounded % 1 === 0) ? rounded.toString() : rounded.toString();
+      }
+
       function updateLiveWeight() {
         var mode = projectRules.mode || 'factorial';
+        if (mode === 'manual') return; // En Modo Manual no se autocalcula en JS
+
         var weightInput = document.querySelector('input[name="issue[custom_field_values][' + weightFieldId + ']"]');
         if (!weightInput) return;
 
@@ -61,13 +74,15 @@
             }
           }
 
-          calculated = Math.round(trackerF * catF * prioF * customCfF * 100) / 100;
+          calculated = trackerF * catF * prioF * customCfF;
         }
 
-        weightInput.value = calculated;
+        weightInput.value = formatWeightVal(calculated);
       }
 
       function initWeightScript() {
+        if (projectRules.mode === 'manual') return;
+
         var weightInput = document.querySelector('input[name="issue[custom_field_values][' + weightFieldId + ']"]');
         if (weightInput) {
           weightInput.addEventListener('input', function() {
@@ -91,7 +106,6 @@
           }
         }
 
-        // Ejecutar un primer cálculo inicial al cargar el formulario
         updateLiveWeight();
       }
 
