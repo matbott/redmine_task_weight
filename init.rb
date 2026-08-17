@@ -26,7 +26,7 @@ Redmine::Plugin.register :redmine_task_weight do
   author_url 'https://github.com/matbott/redmine_task_weight'
   url 'https://github.com/matbott/redmine_task_weight'
   description 'Cálculo de peso automático de tareas por Fórmula Factorial por proyecto.'
-  version '1.3.0'
+  version '1.3.1'
 
 
   # Configuración global del plugin en Administración -> Plugins -> Configurar
