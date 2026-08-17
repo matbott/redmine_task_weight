@@ -368,6 +368,26 @@
         document.addEventListener("DOMContentLoaded", function() {
           var sel = document.getElementById('task_weight_project_select');
           if (sel) { showProjectRules(sel.value); }
+
+          // Reducción de payload: deshabilitar inputs con valor por defecto (1.0)
+          // antes de enviar el formulario para que no se incluyan en el POST.
+          // El backend ya tiene || '1.0' como fallback, así que el comportamiento
+          // es idéntico pero el hash guardado en settings.value es mucho más chico.
+          var form = document.querySelector('form#settings_form') ||
+                     document.querySelector('form[action*="/settings"]') ||
+                     (document.querySelector('.tw-container') && document.querySelector('.tw-container').closest('form'));
+          if (form) {
+            form.addEventListener('submit', function() {
+              var numInputs = document.querySelectorAll('.tw-input-num');
+              numInputs.forEach(function(input) {
+                var parsed = parseFloat(input.value);
+                // Si el valor es exactamente 1.0 (el neutro multiplicativo), no lo enviamos
+                if (!isNaN(parsed) && Math.abs(parsed - 1.0) < 0.0001) {
+                  input.disabled = true;
+                }
+              });
+            });
+          }
         });
       </script>
     <% else %>
