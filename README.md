@@ -6,6 +6,9 @@
 > **Compatibility:** Redmine 5.x / 6.x / 7.x (Rails 6/7/8 & Zeitwerk compatible)
 
 ---
+<img width="1521" height="885" alt="image" src="https://github.com/user-attachments/assets/c50a26b0-7f4f-4a2c-bc26-c7fb61719810" />
+
+<img width="1899" height="715" alt="image" src="https://github.com/user-attachments/assets/14ff9b73-62f8-4efe-8f4c-263869cf45db" />
 
 ## 📌 Description / Descripción
 
