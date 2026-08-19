@@ -180,7 +180,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @user_stats.each do |user_name, stats| %>
+          <% @user_stats.sort_by { |user_name, _| user_name.to_s.downcase }.each do |user_name, stats| %>
             <% 
               pct = @total_open_weight > 0 ? (stats[:open_weight] / @total_open_weight * 100).round(1) : 0.0
               
