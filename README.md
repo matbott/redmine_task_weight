@@ -2,8 +2,8 @@
 
 > **Author:** `matbott & 🤖`  
 > **Repository:** [https://github.com/matbott/redmine_task_weight](https://github.com/matbott/redmine_task_weight)  
-> **Version:** 1.3.0  
-> **Compatibility:** Redmine 4.x / 5.x / 6.x (Rails 6/7/8 & Zeitwerk compatible)
+> **Version:** 1.3.1 
+> **Compatibility:** Redmine 5.x / 6.x / 7.x (Rails 6/7/8 & Zeitwerk compatible)
 
 ---
 
