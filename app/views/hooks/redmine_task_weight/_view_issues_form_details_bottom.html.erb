@@ -17,6 +17,7 @@
     (function() {
       var projectRules = <%= p_rules.to_json.html_safe %>;
       var weightFieldId = <%= weight_field.id.to_json.html_safe %>;
+      var isNewIssue = <%= (@issue.nil? || @issue.new_record?).to_json %>;
 
       function formatWeightVal(val) {
         var rounded = Math.round(val * 100) / 100;
@@ -106,7 +107,10 @@
           }
         }
 
-        updateLiveWeight();
+        // Solo autocalcular al cargar si la tarea es nueva o si el campo está vacío
+        if (isNewIssue || (weightInput && !weightInput.value.trim())) {
+          updateLiveWeight();
+        }
       }
 
       if (document.readyState === "loading") {

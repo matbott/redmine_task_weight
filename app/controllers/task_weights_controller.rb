@@ -1,4 +1,5 @@
 class TaskWeightsController < ApplicationController
+  menu_item :task_weight_report
   before_action :find_project_by_project_id, only: [:index]
   before_action :authorize, only: [:index]
 

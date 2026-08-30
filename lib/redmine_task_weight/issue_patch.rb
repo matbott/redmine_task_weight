@@ -34,35 +34,75 @@ module RedmineTaskWeight
       # 1. Calcular el peso automático para los atributos actuales
       auto_weight = compute_factorial_weight(self.project_id, self.tracker_id, self.category_id, self.priority_id)
 
-      # 2. Obtener el valor ENVIADO/ACTUAL del campo en el issue (del formulario o de la BDD)
+      # 2. Obtener el valor guardado en BDD previamente (si la tarea ya existía)
+      saved_cv = self.custom_values.find { |v| v.custom_field_id == weight_field.id }
+      saved_val_str = (saved_cv&.respond_to?(:value_was) && saved_cv.value_was.present? ? saved_cv.value_was : saved_cv&.value).to_s.strip
+
+      # 3. Obtener el valor enviado en la petición actual
       submitted_val_str = self.custom_field_value(weight_field.id).to_s.strip
-      if submitted_val_str.blank?
-        cv = self.custom_values.find { |v| v.custom_field_id == weight_field.id }
-        submitted_val_str = cv&.value.to_s.strip
-      end
 
-      if submitted_val_str.present?
-        submitted_val_f = submitted_val_str.to_f
+      # CASO A: Tarea Existente (Edición)
+      if self.persisted?
+        # Verificar si cambiaron los factores que afectan el cálculo
+        tracker_changed  = self.respond_to?(:tracker_id_changed?)  && self.tracker_id_changed?
+        category_changed = self.respond_to?(:category_id_changed?) && self.category_id_changed?
+        priority_changed = self.respond_to?(:priority_id_changed?) && self.priority_id_changed?
 
-        # Si el valor enviado a mano es diferente del peso automático actual, es un OVERRIDE MANUAL
-        if (submitted_val_f - auto_weight).abs > 0.01 && submitted_val_f > 0
-          # Verificamos si era el peso automático viejo de antes de cambiar tracker/categoría/prioridad
-          if self.persisted? && (self.tracker_id_changed? || self.category_id_changed? || self.priority_id_changed?)
-            old_tracker_id  = self.respond_to?(:tracker_id_before_last_save)  && self.tracker_id_before_last_save  || (self.respond_to?(:tracker_id_was)  ? self.tracker_id_was  : self.tracker_id)
-            old_category_id = self.respond_to?(:category_id_before_last_save) && self.category_id_before_last_save || (self.respond_to?(:category_id_was) ? self.category_id_was : self.category_id)
-            old_priority_id = self.respond_to?(:priority_id_before_last_save) && self.priority_id_before_last_save || (self.respond_to?(:priority_id_was) ? self.priority_id_was : self.priority_id)
+        extra_cf_changed = false
+        extra_cf_id = project_settings[:custom_field_id]
+        if extra_cf_id.present?
+          extra_cv = self.custom_values.find { |v| v.custom_field_id == extra_cf_id.to_i }
+          extra_cf_changed = extra_cv&.respond_to?(:value_changed?) && extra_cv.value_changed?
+        end
+
+        factors_changed = tracker_changed || category_changed || priority_changed || extra_cf_changed
+
+        # Si los factores NO cambiaron (ej: usuario común editó notas, estado, asignado, etc.)
+        unless factors_changed
+          # Si un manager modificó explícitamente el campo de peso en el formulario, respetarlo
+          if submitted_val_str.present? && submitted_val_str != saved_val_str
+            Rails.logger.info "[redmine_task_weight] Issue ##{self.id}: Manager actualizó peso manualmente a '#{submitted_val_str}'."
+            return
+          end
+
+          # Si ya existe un valor guardado, conservarlo intacto sin recalcular
+          if saved_val_str.present?
+            Rails.logger.info "[redmine_task_weight] Issue ##{self.id}: Factores sin cambios. Conservando peso existente '#{saved_val_str}'."
+            return
+          end
+        end
+
+        # Si los factores SÍ cambiaron (se modificó tracker, categoría o prioridad):
+        if factors_changed
+          # Si el manager envió un valor explícito en el formulario distinto al auto-cálculo
+          if submitted_val_str.present? && submitted_val_str != saved_val_str && (submitted_val_str.to_f - auto_weight).abs > 0.01
+            Rails.logger.info "[redmine_task_weight] Issue ##{self.id}: Factores cambiaron pero manager especificó nuevo peso '#{submitted_val_str}'."
+            return
+          end
+
+          # Si la tarea tenía un peso guardado, verificamos si era un valor manual previo
+          if saved_val_str.present?
+            saved_val_f = saved_val_str.to_f
+            old_tracker_id  = (self.respond_to?(:tracker_id_before_last_save) && self.tracker_id_before_last_save) || (self.respond_to?(:tracker_id_was) ? self.tracker_id_was : self.tracker_id)
+            old_category_id = (self.respond_to?(:category_id_before_last_save) && self.category_id_before_last_save) || (self.respond_to?(:category_id_was) ? self.category_id_was : self.category_id)
+            old_priority_id = (self.respond_to?(:priority_id_before_last_save) && self.priority_id_before_last_save) || (self.respond_to?(:priority_id_was) ? self.priority_id_was : self.priority_id)
 
             old_auto_weight = compute_factorial_weight(self.project_id, old_tracker_id, old_category_id, old_priority_id)
 
-            # Si el valor enviado coincidía exactamente con el peso automático viejo, no era un override manual del usuario
-            if (submitted_val_f - old_auto_weight).abs < 0.01
-              assign_weight_value(weight_field, auto_weight)
+            # Si el valor guardado NO coincidía con el auto-cálculo anterior, era un override manual -> Conservar
+            if (saved_val_f - old_auto_weight).abs > 0.01 && saved_val_f > 0
+              Rails.logger.info "[redmine_task_weight] Issue ##{self.id}: Conservando override manual '#{saved_val_f}' tras cambio de factores."
               return
             end
           end
+        end
+      end
 
-          # Si llegó hasta acá, es un valor puesto manualmente por el usuario -> Respetarlo y NO pisarlo
-          Rails.logger.info "[redmine_task_weight] Issue ##{self.id || 'nuevo'}: Prevalece valor manual enviado '#{submitted_val_f}' (auto calculaba #{auto_weight})."
+      # CASO B: Tarea Nueva
+      if self.new_record? && submitted_val_str.present?
+        submitted_val_f = submitted_val_str.to_f
+        if (submitted_val_f - auto_weight).abs > 0.01 && submitted_val_f > 0
+          Rails.logger.info "[redmine_task_weight] Issue nuevo: Prevalece valor manual ingresado '#{submitted_val_f}'."
           return
         end
       end
