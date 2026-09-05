@@ -1,5 +1,5 @@
 module RedmineTaskWeight
   module ProjectsHelperPatch
-    # No-op: Configuración movida a Administración -> Plugins -> Configurar
+    # No-op: settings were moved to Administration -> Plugins -> Configure.
   end
 end

@@ -1,96 +1,76 @@
 # ⚖️ Redmine Task Weight Plugin
 
-> **Author:** `matbott & 🤖`  
-> **Repository:** [https://github.com/matbott/redmine_task_weight](https://github.com/matbott/redmine_task_weight)  
-> **Version:** 1.3.1 
-> **Compatibility:** Redmine 5.x / 6.x / 7.x (Rails 6/7/8 & Zeitwerk compatible)
-
----
-<img width="1521" height="885" alt="image" src="https://github.com/user-attachments/assets/c50a26b0-7f4f-4a2c-bc26-c7fb61719810" />
-
-<img width="1899" height="715" alt="image" src="https://github.com/user-attachments/assets/14ff9b73-62f8-4efe-8f4c-263869cf45db" />
-
-## 📌 Description / Descripción
-
-### 🇪🇸 Español
-**Redmine Task Weight Plugin** es un plugin para Redmine diseñado para calcular automáticamente el **peso (Score) de carga de trabajo** de cada tarea. Utiliza una **Fórmula Factorial Multiplicativa** basada en atributos configurables por proyecto (Tracker, Categoría, Prioridad y Campos Personalizados de Texto/Lista o Numéricos).
-
-Es ideal para gestionar la distribución de carga de equipo, estimar esfuerzo y alimentar tableros de métricas en **Grafana** consultando directamente la base de datos de Redmine.
-
-### 🇬🇧 English
-**Redmine Task Weight Plugin** is a Redmine plugin engineered to automatically calculate issue **workload weight (Score)**. It uses a **Multiplicative Factorial Formula** based on configurable per-project attributes (Tracker, Category, Priority, and optional List/Numeric Custom Fields).
-
-Ideal for team workload distribution, capacity planning, and feeding metric dashboards in **Grafana** by querying the Redmine database directly.
+> **Author:** `matbott & 🤖`<br>
+> **Repository:** [github.com/matbott/redmine_task_weight](https://github.com/matbott/redmine_task_weight)<br>
+> **Version:** 1.3.3<br>
+> **Compatibility:** Redmine 5.x, 6.x, and 7.x (Rails 6, 7, and 8; Zeitwerk compatible)
 
 ---
 
-## ✨ Features / Características principales
+<img width="1521" height="885" alt="Task Weight settings" src="https://github.com/user-attachments/assets/c50a26b0-7f4f-4a2c-bc26-c7fb61719810" />
 
-### 🇪🇸 Español
-1. **Fórmula Factorial Multiplicativa:**
-   `Peso Final = Factor Tracker * Factor Categoría * Factor Prioridad * Factor Campo Extra`
-2. **Soporte para Campos Personalizados de Texto/Lista:** Asigna factores multiplicadores a opciones de texto (ej. *Complejidad: Baja=0.8, Media=1.0, Alta=1.8, Crítica=2.5*).
-3. **Cálculo "En Vivo" (JavaScript Preview):** Actualización en tiempo real en la pantalla de edición del ticket para roles con visibilidad del campo.
-4. **Cálculo Silencioso en Servidor:** Si el campo está oculto para usuarios comunes (`visible: false`), el servidor calcula y guarda el peso automáticamente al guardar la tarea.
-5. **Respeto de Edición Manual:** Si un usuario autorizado modifica manualmente el valor del peso, el sistema detecta el cambio y respeta el valor manual.
-6. **Administración Global sin Conflictos:** Panel de configuración centralizado en *Administración -> Plugins -> Configurar* con selector de proyecto, evitando conflictos de parcheo con otros plugins (ej. RedmineUp CMS).
-7. **Reporte de Distribución de Carga:** Pestaña de reporte por proyecto que muestra el resumen y porcentaje de carga de trabajo pendiente por usuario asignado.
+<img width="1899" height="715" alt="Workload distribution report" src="https://github.com/user-attachments/assets/14ff9b73-62f8-4efe-8f4c-263869cf45db" />
 
-### 🇬🇧 English
-1. **Multiplicative Factorial Formula:**
-   `Final Weight = Tracker Factor * Category Factor * Priority Factor * Extra Custom Field Factor`
-2. **Text/List Custom Field Support:** Assign weight factors to text list options (e.g. *Complexity: Low=0.8, Medium=1.0, High=1.8, Critical=2.5*).
-3. **Real-Time Live UI Preview (JavaScript):** Updates weight live on the issue editing form for authorized roles.
-4. **Silent Server-Side Processing:** If the custom field is hidden from developers (`visible: false`), the backend automatically calculates and persists the weight upon saving.
-5. **Smart Manual Override:** If an authorized user manually enters a custom weight value, the system respects the manual entry and avoids overwriting it.
-6. **Zero-Conflict Global Administration:** Centralized configuration panel in *Administration -> Plugins -> Configure* with project selector dropdown, avoiding monkey-patch conflicts with third-party plugins (e.g. RedmineUp CMS).
-7. **Workload Distribution Report:** Built-in project tab displaying workload summary and percentage distribution per assignee.
+## 📌 Description
 
----
+Redmine Task Weight automatically calculates an issue's **workload weight (score)**. It uses a multiplicative formula based on configurable per-project attributes: tracker, category, priority, and an optional List or Numeric custom field.
 
-## 🚀 Installation / Instalación
+It is designed for team workload distribution, capacity planning, and metrics dashboards such as **Grafana**, which can query the calculated values directly from the Redmine database.
+
+## ✨ Features
+
+1. **Multiplicative formula**
+
+   ```text
+   Final Weight = Tracker Factor × Category Factor × Priority Factor × Extra Custom Field Factor
+   ```
+
+2. **List and numeric custom field support:** assign multipliers to list options (for example, *Complexity: Low = 0.8, Medium = 1.0, High = 1.8, Critical = 2.5*) or use a positive numeric value directly.
+3. **Live preview:** authorized users see the calculated weight update in real time while editing an issue.
+4. **Server-side calculation:** the plugin calculates and stores the weight when an issue is saved, even when the target custom field is hidden from regular users.
+5. **Manual overrides:** an explicitly entered weight is preserved instead of being overwritten by later calculations.
+6. **Per-project configuration:** configure calculation rules centrally under *Administration → Plugins → Configure*.
+7. **Three calculation modes:** multiplicative formula, priority only, or fully manual.
+8. **Workload distribution report:** a project tab summarizes open workload and completed score by assignee.
+
+## 🚀 Installation
+
+Clone the plugin into your Redmine plugins directory:
 
 ```bash
 cd /path/to/redmine/plugins
 git clone https://github.com/matbott/redmine_task_weight.git
 ```
 
-Restart your Redmine server / Reiniciá tu servidor de Redmine:
+Restart Redmine. For example, a systemd installation might use:
+
 ```bash
-# Example for Systemd / Puma / Passenger:
 sudo systemctl restart redmine
 ```
 
----
+No database migration is required. On startup, the plugin creates a hidden float custom field named **Task Weight** when no compatible weight field exists.
 
-## ⚙️ Configuration / Configuración
+## ⚙️ Configuration
 
-### 🇪🇸 Español
-1. Dirígete a **Administración -> Plugins -> Redmine Task Weight Plugin -> Configurar**.
-2. Selecciona el proyecto deseado en el selector desplegable.
-3. Configura el modo de cálculo (*Fórmula Factorial* o *Por Prioridad*).
-4. Asigna los factores deseados a Trackers, Categorías, Prioridades y Campos Personalizados adicionales.
-5. Guarda los cambios.
-6. En tu proyecto, habilita el módulo **"Peso de Tareas"** en *Configuración del proyecto -> Módulos*.
+1. Open **Administration → Plugins → Redmine Task Weight Plugin → Configure**.
+2. Select a project.
+3. Select a calculation mode: *Multiplicative Formula*, *Priority Only*, or *Manual*.
+4. Set factors for trackers, categories, priorities, and, optionally, another custom field.
+5. Select a different target custom field if you do not want to use the automatically managed **Task Weight** field.
+6. Save the settings.
+7. Open **Project Settings → Modules** and enable **Task Weight** for each project that should use calculation and reporting.
 
-### 🇬🇧 English
-1. Go to **Administration -> Plugins -> Redmine Task Weight Plugin -> Configure**.
-2. Select your target project from the dropdown.
-3. Choose the calculation mode (*Factorial Formula* or *By Priority*).
-4. Set weight factors for Trackers, Categories, Priorities, and optional Custom Fields.
-5. Save changes.
-6. Enable the **"Task Weight"** module under *Project Settings -> Modules*.
+The plugin continues to recognize the legacy Spanish field names **Peso de la Tarea** and **Peso**, so existing installations remain compatible.
 
----
+## 📊 Database and Grafana Integration
 
-## 📊 Database & Grafana Integration / Integración con Grafana
+The calculated value is stored in Redmine's `custom_values` table under the configured target custom field. By default, that field is named **Task Weight**.
 
-The calculated weight is automatically stored in Redmine's `custom_values` table under the custom field **"Peso de la Tarea"**.
+Example PostgreSQL query for Grafana:
 
-Example SQL Query for Grafana:
 ```sql
-SELECT 
-  u.login AS user,
+SELECT
+  u.login AS user_login,
   CONCAT(u.firstname, ' ', u.lastname) AS user_name,
   p.identifier AS project,
   i.id AS issue_id,
@@ -102,13 +82,17 @@ FROM issues i
 JOIN projects p ON p.id = i.project_id
 JOIN issue_statuses s ON s.id = i.status_id
 LEFT JOIN users u ON u.id = i.assigned_to_id
-JOIN custom_values cv ON cv.customized_type = 'Issue' AND cv.customized_id = i.id
-JOIN custom_fields cf ON cf.id = cv.custom_field_id AND cf.name = 'Peso de la Tarea'
+JOIN custom_values cv
+  ON cv.customized_type = 'Issue'
+ AND cv.customized_id = i.id
+JOIN custom_fields cf
+  ON cf.id = cv.custom_field_id
+ AND cf.name = 'Task Weight'
 WHERE s.is_closed = FALSE;
 ```
 
----
+If you selected another target custom field, update the `cf.name` condition accordingly.
 
-## 📄 License / Licencia
+## 📄 License
 
-MIT License - Created by `matbott & 🤖`.
+MIT License. Created by `matbott & 🤖`.

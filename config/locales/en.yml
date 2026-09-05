@@ -10,4 +10,4 @@ en:
   label_total_weight: "Total Weight (Score)"
   label_weight_percentage: "Workload %"
   label_unassigned: "Unassigned"
-  error_weight_field_not_found: "Custom field 'Peso de la Tarea' not found."
+  error_weight_field_not_found: "Custom field 'Task Weight' not found."

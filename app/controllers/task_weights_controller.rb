@@ -20,7 +20,7 @@ class TaskWeightsController < ApplicationController
 
     @user_stats = {} # { user_name => { open_count: 0, open_weight: 0.0, closed_count: 0, closed_weight: 0.0 } }
 
-    # 1. Tareas Abiertas (Carga Pendiente Actual)
+    # 1. Open issues (current pending workload).
     open_statuses = IssueStatus.where(is_closed: false).pluck(:id)
     open_issues = @project.issues.where(status_id: open_statuses)
 
@@ -33,7 +33,7 @@ class TaskWeightsController < ApplicationController
       @user_stats[user_name][:open_weight] += weight_val
     end
 
-    # 2. Tareas Cerradas (Score de Puntos Resueltos en el Período)
+    # 2. Closed issues (score completed during the selected period).
     closed_statuses = IssueStatus.where(is_closed: true).pluck(:id)
     closed_issues = @project.issues.where(status_id: closed_statuses)
     if @period_date_range
@@ -53,7 +53,7 @@ class TaskWeightsController < ApplicationController
       @user_stats[user_name][:closed_weight] += weight_val
     end
 
-    # 3. Métricas Resumen KPI
+    # 3. KPI summary metrics.
     @total_open_issues = @user_stats.values.sum { |s| s[:open_count] }
     @total_open_weight = @user_stats.values.sum { |s| s[:open_weight] }.round(1)
 

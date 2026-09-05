@@ -7,31 +7,31 @@
 
 <%= form_tag(project_task_weight_settings_path(@project), method: :post, class: "tabular") do %>
   <div class="box">
-    <h3>Modo de Cálculo para <%= @project.name %></h3>
+    <h3>Calculation Mode for <%= @project.name %></h3>
     <p>
       <label>
         <%= radio_button_tag 'mode', 'priority', current_mode == 'priority' %>
-        <strong>Por Prioridad General</strong>
+        <strong>By General Priority</strong>
       </label>
       <br>
       <label>
         <%= radio_button_tag 'mode', 'rules', current_mode == 'rules' %>
-        <strong>Matriz Avanzada (Tracker + Categoría + Prioridad)</strong>
+        <strong>Advanced Matrix (Tracker + Category + Priority)</strong>
       </label>
     </p>
   </div>
 
   <div class="box">
-    <h3>Matriz de Reglas de Peso (Score)</h3>
-    <p class="description">Asigna el peso automático para las tareas de este proyecto:</p>
+    <h3>Weight Rule Matrix (Score)</h3>
+    <p class="description">Set the automatic weight for issues in this project:</p>
 
     <table class="list">
       <thead>
         <tr>
-          <th>Tipo (Tracker)</th>
-          <th>Categoría</th>
-          <th>Prioridad</th>
-          <th>Peso (Score)</th>
+          <th>Type (Tracker)</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Weight (Score)</th>
         </tr>
       </thead>
       <tbody>
@@ -43,7 +43,7 @@
               <% rule_key = "trk_#{tracker.id}_cat_#{cat_id}_prio_#{prio.id}" %>
               <tr>
                 <td><strong><%= tracker.name %></strong></td>
-                <td><%= cat ? cat.name : '<i>(Sin categoría)</i>'.html_safe %></td>
+                <td><%= cat ? cat.name : '<i>(No category)</i>'.html_safe %></td>
                 <td><%= prio.name %></td>
                 <td>
                   <%= text_field_tag "rules[#{rule_key}]", 

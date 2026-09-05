@@ -131,15 +131,15 @@
 
 <div class="tw-container">
   <div class="tw-card">
-    <h3 class="tw-section-title">Configuración de Pesos de Tarea por Proyecto</h3>
+    <h3 class="tw-section-title">Task Weight Settings by Project</h3>
     <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.95em;">
-      Selecciona un proyecto para configurar el modo de cálculo. Se desactivarán visualmente los campos que no correspondan.
+      Select a project and configure its calculation mode. Fields that do not apply to the selected mode will be disabled.
     </p>
 
     <% if projects.any? %>
       <div style="margin-bottom: 20px; display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
         <div>
-          <label for="task_weight_project_select" style="font-weight: 600 !important; margin-right: 10px !important;">Seleccionar Proyecto:</label>
+          <label for="task_weight_project_select" style="font-weight: 600 !important; margin-right: 10px !important;">Select Project:</label>
           <select id="task_weight_project_select" onchange="showProjectRules(this.value);" style="font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;">
             <% projects.each_with_index do |project, idx| %>
               <option value="<%= project.id %>"><%= project.name %></option>
@@ -148,9 +148,9 @@
         </div>
 
         <div>
-          <label for="settings_weight_custom_field_id" style="font-weight: 600 !important; margin-right: 10px !important;">Campo Destino del Peso:</label>
+          <label for="settings_weight_custom_field_id" style="font-weight: 600 !important; margin-right: 10px !important;">Weight Target Field:</label>
           <%= select_tag "settings[weight_custom_field_id]",
-                options_for_select([["(Auto: Peso de la Tarea / Task Weight)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, all_settings[:weight_custom_field_id].to_s),
+                options_for_select([["(Auto: Task Weight)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, all_settings[:weight_custom_field_id].to_s),
                 style: "font-size: 1em; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;" %>
         </div>
       </div>
@@ -167,49 +167,49 @@
         %>
         <div id="project_rules_<%= project.id %>" class="project-rules-block" style="<%= idx == 0 ? '' : 'display: none;' %>">
           
-          <!-- Modo de cálculo (3 Opciones) -->
+          <!-- Calculation mode (three options). -->
           <div class="tw-subcard" style="margin-bottom: 15px;">
-            <h5 style="margin-bottom: 8px;">Modo de Cálculo para <%= project.name %></h5>
+            <h5 style="margin-bottom: 8px;">Calculation Mode for <%= project.name %></h5>
             <div class="tw-radio-group">
               <label class="tw-radio-item">
                 <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'factorial', current_mode == 'factorial',
                       onchange: "updateModeUI(#{project.id}, 'factorial');" %>
-                <span><strong>Fórmula Factorial (Multiplicativa)</strong></span>
+                <span><strong>Multiplicative Formula</strong></span>
               </label>
               <label class="tw-radio-item">
                 <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'priority', current_mode == 'priority',
                       onchange: "updateModeUI(#{project.id}, 'priority');" %>
-                <span><strong>Solo por Prioridad</strong></span>
+                <span><strong>Priority Only</strong></span>
               </label>
               <label class="tw-radio-item" style="border-color: #f59e0b; background: #fffbeb;">
                 <%= radio_button_tag "settings[project_rules][#{project.id}][mode]", 'manual', current_mode == 'manual',
                       onchange: "updateModeUI(#{project.id}, 'manual');" %>
-                <span style="color: #b45309;"><strong>Modo Manual Puro (Sin Autocálculo)</strong></span>
+                <span style="color: #b45309;"><strong>Manual Mode (No Automatic Calculation)</strong></span>
               </label>
             </div>
 
             <div id="notice_manual_<%= project.id %>" class="tw-notice" style="<%= current_mode == 'manual' ? '' : 'display: none;' %>">
-              ✍️ <strong>Modo Manual Activo:</strong> Las tareas de este proyecto NO se calcularán automáticamente. Cada tarea conservará únicamente el peso ingresado a mano por los usuarios autorizados.
+              ✍️ <strong>Manual Mode Active:</strong> Issues in this project will not be calculated automatically. Each issue will keep only the weight entered by an authorized user.
             </div>
           </div>
 
-          <!-- Campo Personalizado Adicional -->
+          <!-- Optional extra custom field. -->
           <div id="block_custom_field_<%= project.id %>" class="tw-subcard" style="margin-bottom: 15px;">
-            <h5 style="margin-bottom: 4px;">Campo Personalizado Adicional (Opcional)</h5>
+            <h5 style="margin-bottom: 4px;">Additional Custom Field (Optional)</h5>
             <p style="margin: 0 0 8px 0; color: #64748b; font-size: 0.88em;">
-              Si seleccionas un campo de tipo Lista o Numérico (ej: Complejidad, Puntos), se incluirá como factor multiplicador.
+              Select a List or Numeric field (for example, Complexity or Points) to include it as a multiplier.
             </p>
             <%= select_tag "settings[project_rules][#{project.id}][custom_field_id]", 
-                  options_for_select([["(Ninguno)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, custom_field_id),
+                  options_for_select([["(None)", ""]] + all_custom_fields.map { |cf| ["#{cf.name} (#{cf.field_format})", cf.id.to_s] }, custom_field_id),
                   onchange: "toggleCustomFieldFactors(#{project.id}, this.value);",
                   style: "padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" %>
           </div>
 
-          <!-- Tres columnas con tablas de factores -->
+          <!-- Three factor tables. -->
           <div class="tw-grid">
-            <!-- Factores por Tracker -->
+            <!-- Factors by tracker. -->
             <div id="block_tracker_<%= project.id %>" class="tw-subcard">
-              <h5>1. Factores por Tracker</h5>
+              <h5>1. Tracker Factors</h5>
               <% if project.trackers.any? %>
                 <table class="tw-table">
                   <thead>
@@ -228,20 +228,20 @@
                   </tbody>
                 </table>
               <% else %>
-                <p style="color: #94a3b8; font-size: 0.9em; margin: 0;">No hay trackers configurados en este proyecto.</p>
+                <p style="color: #94a3b8; font-size: 0.9em; margin: 0;">No trackers are configured for this project.</p>
               <% end %>
             </div>
 
-            <!-- Factores por Categoría -->
+            <!-- Factors by category. -->
             <div id="block_category_<%= project.id %>" class="tw-subcard">
-              <h5>2. Factores por Categoría</h5>
+              <h5>2. Category Factors</h5>
               <table class="tw-table">
                 <thead>
-                  <tr><th>Categoría</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                  <tr><th>Category</th><th style="text-align: center; width: 80px;">Factor</th></tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><i>(Sin Categoría)</i></td>
+                    <td><i>(No Category)</i></td>
                     <td style="text-align: center;">
                       <%= text_field_tag "settings[project_rules][#{project.id}][category_factors][0]", 
                             category_factors['0'] || '1.0', class: 'tw-input-num' %>
@@ -260,12 +260,12 @@
               </table>
             </div>
 
-            <!-- Factores por Prioridad -->
+            <!-- Factors by priority. -->
             <div id="block_priority_<%= project.id %>" class="tw-subcard">
-              <h5>3. Factores por Prioridad</h5>
+              <h5>3. Priority Factors</h5>
               <table class="tw-table">
                 <thead>
-                  <tr><th>Prioridad</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                  <tr><th>Priority</th><th style="text-align: center; width: 80px;">Factor</th></tr>
                 </thead>
                 <tbody>
                   <% IssuePriority.active.each do |prio| %>
@@ -282,15 +282,15 @@
             </div>
           </div>
 
-          <!-- Factores por Campo Personalizado Adicional -->
+          <!-- Factors for the additional custom field. -->
           <% all_custom_fields.each do |cf| %>
             <% next unless cf.field_format == 'list' && cf.possible_values.any? %>
             <div id="cf_factors_<%= project.id %>_<%= cf.id %>" class="cf-factors-block-<%= project.id %>" style="<%= custom_field_id == cf.id.to_s ? '' : 'display: none;' %> margin-top: 20px;">
               <div class="tw-subcard">
-                <h5>4. Factores para Opciones de "<%= cf.name %>"</h5>
+                <h5>4. Factors for "<%= cf.name %>" Options</h5>
                 <table class="tw-table" style="max-width: 450px;">
                   <thead>
-                    <tr><th>Opción de Texto</th><th style="text-align: center; width: 80px;">Factor</th></tr>
+                    <tr><th>Text Option</th><th style="text-align: center; width: 80px;">Factor</th></tr>
                   </thead>
                   <tbody>
                     <% cf.possible_values.each do |val| %>
@@ -369,10 +369,9 @@
           var sel = document.getElementById('task_weight_project_select');
           if (sel) { showProjectRules(sel.value); }
 
-          // Reducción de payload: deshabilitar inputs con valor por defecto (1.0)
-          // antes de enviar el formulario para que no se incluyan en el POST.
-          // El backend ya tiene || '1.0' como fallback, así que el comportamiento
-          // es idéntico pero el hash guardado en settings.value es mucho más chico.
+          // Reduce the request size by disabling inputs whose value is the default (1.0).
+          // The backend already uses 1.0 as its fallback, so this keeps the same behavior
+          // while storing a much smaller settings hash.
           var form = document.querySelector('form#settings_form') ||
                      document.querySelector('form[action*="/settings"]') ||
                      (document.querySelector('.tw-container') && document.querySelector('.tw-container').closest('form'));
@@ -381,7 +380,7 @@
               var numInputs = document.querySelectorAll('.tw-input-num');
               numInputs.forEach(function(input) {
                 var parsed = parseFloat(input.value);
-                // Si el valor es exactamente 1.0 (el neutro multiplicativo), no lo enviamos
+                // Do not submit the multiplicative identity (1.0).
                 if (!isNaN(parsed) && Math.abs(parsed - 1.0) < 0.0001) {
                   input.disabled = true;
                 }
@@ -391,7 +390,7 @@
         });
       </script>
     <% else %>
-      <p style="color: #94a3b8;">No hay proyectos activos en Redmine.</p>
+      <p style="color: #94a3b8;">There are no active projects in Redmine.</p>
     <% end %>
   </div>
 </div>

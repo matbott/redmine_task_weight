@@ -110,20 +110,20 @@
     <div>
       <h2>⚖️ <%= l(:label_task_weight_report) %> &mdash; <%= @project.name %></h2>
       <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.92em;">
-        Monitoreo de carga de trabajo activa y score de puntos resueltos del equipo.
+        Monitor the team's active workload and completed score.
       </p>
     </div>
 
-    <!-- Filtro de Período para Score Resuelto -->
+    <!-- Completed-score period filter. -->
     <div style="background: #ffffff; padding: 8px 14px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
-      <label for="period_select" style="font-weight: 600; font-size: 0.9em; margin: 0;">Período Score:</label>
+      <label for="period_select" style="font-weight: 600; font-size: 0.9em; margin: 0;">Score Period:</label>
       <form method="get" action="<%= url_for(controller: 'task_weights', action: 'index', project_id: @project) %>" style="margin: 0;">
 
         <%= select_tag 'period', options_for_select([
-              ['Este Mes', 'this_month'],
-              ['Últimos 30 días', 'last_30_days'],
-              ['Este Año', 'this_year'],
-              ['Histórico Total', 'all_time']
+              ['This Month', 'this_month'],
+              ['Last 30 Days', 'last_30_days'],
+              ['This Year', 'this_year'],
+              ['All Time', 'all_time']
             ], @period),
             onchange: 'this.form.submit();',
             style: 'padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.9em; background: #fff;' %>
@@ -131,52 +131,52 @@
     </div>
   </div>
 
-  <!-- Tarjetas KPI -->
+  <!-- KPI cards. -->
   <div class="tw-kpi-grid">
     <div class="tw-kpi-card">
-      <div class="kpi-label">📦 Carga Pendiente Total</div>
+      <div class="kpi-label">📦 Total Pending Workload</div>
       <div class="kpi-value"><%= @total_open_weight %> <span style="font-size: 0.55em; color: #64748b;">pts</span></div>
-      <div class="kpi-sub"><%= @total_open_issues %> tareas abiertas en cola</div>
+      <div class="kpi-sub"><%= @total_open_issues %> open issues in the queue</div>
     </div>
 
     <div class="tw-kpi-card">
-      <div class="kpi-label">⚖️ Promedio / Técnico</div>
+      <div class="kpi-label">⚖️ Average / Assignee</div>
       <div class="kpi-value"><%= @avg_open_weight_per_user %> <span style="font-size: 0.55em; color: #64748b;">pts</span></div>
-      <div class="kpi-sub"><%= @active_user_count %> técnicos con carga activa</div>
+      <div class="kpi-sub"><%= @active_user_count %> assignees with active work</div>
     </div>
 
     <div class="tw-kpi-card">
-      <div class="kpi-label">⚠️ Mayor Carga Activa</div>
+      <div class="kpi-label">⚠️ Highest Active Workload</div>
       <div class="kpi-value" style="font-size: 1.25em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
         <%= @top_loaded_user || '-' %>
       </div>
       <div class="kpi-sub">
         <% if @top_loaded_user %>
-          <%= @top_loaded_weight %> pts asignados hoy
+          <%= @top_loaded_weight %> pts currently assigned
         <% else %>
-          Sin carga asignada
+          No assigned workload
         <% end %>
       </div>
     </div>
 
     <div class="tw-kpi-card" style="border-left: 4px solid #10b981;">
-      <div class="kpi-label" style="color: #047857;">🏆 Score Resuelto (<%= @period == 'this_month' ? 'Este Mes' : (@period == 'last_30_days' ? 'Últimos 30d' : (@period == 'this_year' ? 'Este Año' : 'Total')) %>)</div>
+      <div class="kpi-label" style="color: #047857;">🏆 Completed Score (<%= @period == 'this_month' ? 'This Month' : (@period == 'last_30_days' ? 'Last 30 Days' : (@period == 'this_year' ? 'This Year' : 'All Time')) %>)</div>
       <div class="kpi-value" style="color: #047857;"><%= @total_closed_weight %> <span style="font-size: 0.55em; color: #047857;">pts</span></div>
-      <div class="kpi-sub"><%= @total_closed_issues %> tareas resueltas</div>
+      <div class="kpi-sub"><%= @total_closed_issues %> completed issues</div>
     </div>
   </div>
 
-  <!-- Tabla de Distribución -->
+  <!-- Workload distribution table. -->
   <div class="tw-report-card">
     <% if @user_stats.any? %>
       <table class="tw-report-table">
         <thead>
           <tr>
-            <th>Técnico / Usuario</th>
-            <th style="text-align: center; width: 120px;">Tareas Abiertas</th>
-            <th style="text-align: right; width: 130px;">Peso Pendiente</th>
-            <th style="text-align: left; width: 250px;">Distribución (% Carga)</th>
-            <th style="text-align: right; width: 180px;">🏆 Score Resuelto</th>
+            <th>Assignee / User</th>
+            <th style="text-align: center; width: 120px;">Open Issues</th>
+            <th style="text-align: right; width: 130px;">Pending Weight</th>
+            <th style="text-align: left; width: 250px;">Distribution (% Workload)</th>
+            <th style="text-align: right; width: 180px;">🏆 Completed Score</th>
           </tr>
         </thead>
         <tbody>
@@ -192,15 +192,15 @@
             <% 
               pct = @total_open_weight > 0 ? (stats[:open_weight] / @total_open_weight * 100).round(1) : 0.0
               
-              # Semáforo dinámico de color en la barra de progreso
+              # Dynamic color thresholds for the progress bar.
               bar_color = if pct >= 35.0
-                            '#ef4444' # Rojo: Sobrecargado (> 35% del proyecto)
+                            '#ef4444' # Red: overloaded (> 35% of the project workload).
                           elsif pct >= 20.0
-                            '#f59e0b' # Amarillo: Carga media-alta (20% - 35%)
+                            '#f59e0b' # Amber: medium-high workload (20%-35%).
                           elsif pct > 0
-                            '#10b981' # Verde: Carga equilibrada / óptima (< 20%)
+                            '#10b981' # Green: balanced workload (< 20%).
                           else
-                            '#94a3b8' # Gris: Sin carga activa
+                            '#94a3b8' # Gray: no active workload.
                           end
             %>
             <tr>
@@ -217,23 +217,23 @@
               </td>
               <td style="text-align: right;">
                 <span style="font-weight: 700; color: #047857;"><%= stats[:closed_weight].round(1) %> pts</span>
-                <span style="font-size: 0.8em; color: #64748b;">(<%= stats[:closed_count] %> cerradas)</span>
+                <span style="font-size: 0.8em; color: #64748b;">(<%= stats[:closed_count] %> closed)</span>
               </td>
             </tr>
           <% end %>
         </tbody>
         <tfoot>
           <tr>
-            <td>TOTAL PROYECTO</td>
+            <td>PROJECT TOTAL</td>
             <td style="text-align: center;"><%= @total_open_issues %></td>
             <td style="text-align: right;"><%= @total_open_weight %> pts</td>
-            <td>100% Carga Activa</td>
-            <td style="text-align: right; color: #047857;"><%= @total_closed_weight %> pts (<%= @total_closed_issues %> cerradas)</td>
+            <td>100% Active Workload</td>
+            <td style="text-align: right; color: #047857;"><%= @total_closed_weight %> pts (<%= @total_closed_issues %> closed)</td>
           </tr>
         </tfoot>
       </table>
     <% else %>
-      <p style="color: #94a3b8; text-align: center; padding: 20px 0; margin: 0;">No hay tareas registradas en este proyecto.</p>
+      <p style="color: #94a3b8; text-align: center; padding: 20px 0; margin: 0;">No issues were found in this project.</p>
     <% end %>
   </div>
 </div>

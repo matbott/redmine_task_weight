@@ -26,7 +26,7 @@
 
       function updateLiveWeight() {
         var mode = projectRules.mode || 'factorial';
-        if (mode === 'manual') return; // En Modo Manual no se autocalcula en JS
+        if (mode === 'manual') return; // Manual mode never calculates weight in JavaScript.
 
         var weightInput = document.querySelector('input[name="issue[custom_field_values][' + weightFieldId + ']"]');
         if (!weightInput) return;
@@ -107,7 +107,7 @@
           }
         }
 
-        // Solo autocalcular al cargar si la tarea es nueva o si el campo está vacío
+        // Calculate on load only for new issues or when the field is empty.
         if (isNewIssue || (weightInput && !weightInput.value.trim())) {
           updateLiveWeight();
         }

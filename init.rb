@@ -1,7 +1,7 @@
 require File.expand_path('../lib/redmine_task_weight/hooks', __FILE__)
 require File.expand_path('../lib/redmine_task_weight/issue_patch', __FILE__)
 
-# Aplicar parche de Issue para cálculo automático de pesos
+# Apply the Issue patch for automatic weight calculation.
 def apply_task_weight_patches
   unless Issue.included_modules.include?(RedmineTaskWeight::IssuePatch)
     Issue.include(RedmineTaskWeight::IssuePatch)
@@ -25,19 +25,19 @@ Redmine::Plugin.register :redmine_task_weight do
   author 'matbott & 🤖'
   author_url 'https://github.com/matbott/redmine_task_weight'
   url 'https://github.com/matbott/redmine_task_weight'
-  description 'Cálculo de peso automático de tareas por Fórmula Factorial por proyecto.'
-  version '1.3.2'
+  description 'Automatically calculate issue workload weights using configurable per-project factors.'
+  version '1.3.3'
 
 
-  # Configuración global del plugin en Administración -> Plugins -> Configurar
+  # Global plugin settings under Administration -> Plugins -> Configure.
   settings default: { 'project_rules' => {} }, partial: 'settings/redmine_task_weight_settings'
 
-  # Módulo de proyecto activable individualmente para el reporte
+  # Project module that enables the workload report for each project.
   project_module :task_weight do
     permission :view_task_weight_report, { task_weights: [:index] }, read: true
   end
 
-  # Menú de reportes del proyecto
+  # Project report menu entry.
   menu :project_menu,
        :task_weight_report,
        { controller: 'task_weights', action: 'index' },
@@ -48,11 +48,11 @@ Redmine::Plugin.register :redmine_task_weight do
 end
 
 
-# Autocreación del Custom Field Oculto al iniciar Redmine
+# Create the hidden custom field when Redmine starts, if needed.
 Rails.configuration.after_initialize do
   begin
     if CustomField.table_exists?
-      field_name = 'Peso de la Tarea'
+      field_name = 'Task Weight'
 
       unless IssueCustomField.exists?(name: ['Peso de la Tarea', 'Task Weight', 'Peso', 'Weight'])
         IssueCustomField.create!(
@@ -61,16 +61,14 @@ Rails.configuration.after_initialize do
           is_required: false,
           is_for_all: false,
           is_filter: true,
-          visible: false, # Oculto para usuarios comunes (anti-trampas)
+          visible: false, # Hidden from regular users to prevent manual manipulation.
           default_value: '1',
-          description: 'Campo oculto administrado automáticamente por redmine_task_weight'
+          description: 'Hidden field managed automatically by redmine_task_weight'
         )
-        Rails.logger.info "[redmine_task_weight] CustomField '#{field_name}' creado automáticamente."
+        Rails.logger.info "[redmine_task_weight] Custom field '#{field_name}' created automatically."
       end
     end
   rescue => e
-    Rails.logger.error "[redmine_task_weight] Error al verificar CustomField: #{e.message}"
+    Rails.logger.error "[redmine_task_weight] Error while checking the custom field: #{e.message}"
   end
 end
-
-
