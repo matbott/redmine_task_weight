@@ -1,7 +1,10 @@
 <style type="text/css">
+  /* Distribución de Carga — estética alineada al tema redmine-modern-theme-mf.
+     Usa los design tokens del tema (--c-*, --r-*) con fallback para cuando
+     el tema no está activo. */
   .tw-report-container {
     font-family: inherit;
-    color: #1e293b;
+    color: var(--c-text, #1e293b);
     width: 100%;
     margin-top: 10px;
   }
@@ -16,8 +19,45 @@
   .tw-header-bar h2 {
     margin: 0;
     font-size: 1.5em;
-    color: #0f172a;
+    color: var(--c-text, #0f172a);
   }
+  .tw-subtitle {
+    margin: 4px 0 0 0;
+    color: var(--c-text-muted, #64748b);
+    font-size: 0.92em;
+  }
+
+  /* Period filter. */
+  .tw-period-box {
+    background: var(--c-surface, #ffffff);
+    border: 1px solid var(--c-border, #cbd5e1);
+    border-radius: var(--r, 6px);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tw-period-box label {
+    font-weight: 600;
+    font-size: 0.9em;
+    margin: 0;
+    color: var(--c-text-muted, #475569);
+  }
+  .tw-period-box select {
+    padding: 4px 8px;
+    border-radius: var(--r-sm, 4px);
+    border: 1px solid var(--c-border-2, #cbd5e1);
+    background: var(--c-surface-2, #ffffff);
+    color: var(--c-text, #0f172a);
+    font-size: 0.9em;
+  }
+  .tw-period-box select:focus {
+    outline: none;
+    border-color: var(--c-primary, #0891b2);
+    box-shadow: 0 0 0 2px var(--c-focus-ring, rgba(8,145,178,.25));
+  }
+
+  /* KPI cards. */
   .tw-kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -25,15 +65,15 @@
     margin-bottom: 25px;
   }
   .tw-kpi-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    background: var(--c-surface, #ffffff);
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--r-md, 8px);
     padding: 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .tw-kpi-card .kpi-label {
     font-size: 0.85em;
-    color: #64748b;
+    color: var(--c-text-muted, #64748b);
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: 6px;
@@ -41,17 +81,31 @@
   .tw-kpi-card .kpi-value {
     font-size: 1.6em;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--c-text, #0f172a);
+  }
+  .tw-kpi-card .kpi-unit {
+    font-size: 0.55em;
+    color: var(--c-text-muted, #64748b);
   }
   .tw-kpi-card .kpi-sub {
     font-size: 0.82em;
-    color: #64748b;
+    color: var(--c-text-muted, #64748b);
     margin-top: 4px;
   }
+  .tw-kpi-card.tw-kpi-success {
+    border-left: 4px solid var(--c-success, #10b981);
+  }
+  .tw-kpi-success .kpi-label,
+  .tw-kpi-success .kpi-value,
+  .tw-kpi-success .kpi-unit {
+    color: var(--c-success, #047857);
+  }
+
+  /* Report card + table. */
   .tw-report-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    background: var(--c-surface, #ffffff);
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--r-md, 8px);
     padding: 20px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
@@ -61,29 +115,38 @@
     margin-top: 10px;
   }
   .tw-report-table th {
-    background: #f8fafc;
-    color: #475569;
+    background: var(--c-surface-2, #f8fafc);
+    color: var(--c-text-muted, #475569);
     font-size: 0.85em;
     text-transform: uppercase;
     padding: 10px 12px;
     text-align: left;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--c-border, #e2e8f0);
   }
   .tw-report-table td {
     padding: 12px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--c-border, #f1f5f9);
     vertical-align: middle;
     font-size: 0.95em;
+    color: var(--c-text, #1e293b);
   }
-  .tw-report-table tr:hover td {
-    background: #f8fafc;
+  .tw-report-table tbody tr:hover td {
+    background: var(--c-surface-2, #f8fafc);
   }
   .tw-report-table tfoot tr td {
-    background: #f1f5f9;
+    background: var(--c-surface-2, #f1f5f9);
+    color: var(--c-text, #0f172a);
     font-weight: 700;
-    border-top: 2px solid #cbd5e1;
+    border-top: 2px solid var(--c-border-2, #cbd5e1);
     border-bottom: none;
   }
+  .tw-cell-strong { font-weight: 600; }
+  .tw-cell-right  { text-align: right; }
+  .tw-cell-center { text-align: center; }
+  .tw-cell-success { color: var(--c-success, #047857); font-weight: 700; }
+  .tw-cell-success-sub { color: var(--c-text-muted, #64748b); font-size: 0.8em; }
+
+  /* Workload bars. */
   .tw-progress-wrapper {
     display: flex;
     align-items: center;
@@ -92,7 +155,7 @@
     max-width: 220px;
   }
   .tw-progress-bg {
-    background-color: #e2e8f0;
+    background-color: var(--c-border, #e2e8f0);
     flex-grow: 1;
     height: 12px;
     border-radius: 6px;
@@ -103,20 +166,41 @@
     border-radius: 6px;
     transition: width 0.3s ease;
   }
+  .tw-pct {
+    font-size: 0.88em;
+    font-weight: 600;
+    min-width: 42px;
+    text-align: right;
+  }
+  .tw-bar-danger  { color: var(--c-danger,  #ef4444); }
+  .tw-bar-warning { color: var(--c-warning, #f59e0b); }
+  .tw-bar-success { color: var(--c-success, #10b981); }
+  .tw-bar-muted   { color: var(--c-text-subtle, #94a3b8); }
+  .tw-progress-fill.tw-bar-danger  { background-color: var(--c-danger,  #ef4444); }
+  .tw-progress-fill.tw-bar-warning { background-color: var(--c-warning, #f59e0b); }
+  .tw-progress-fill.tw-bar-success { background-color: var(--c-success, #10b981); }
+  .tw-progress-fill.tw-bar-muted   { background-color: var(--c-text-subtle, #94a3b8); }
+
+  .tw-empty {
+    color: var(--c-text-subtle, #94a3b8);
+    text-align: center;
+    padding: 20px 0;
+    margin: 0;
+  }
 </style>
 
 <div class="tw-report-container">
   <div class="tw-header-bar">
     <div>
       <h2>⚖️ <%= l(:label_task_weight_report) %> &mdash; <%= @project.name %></h2>
-      <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.92em;">
+      <p class="tw-subtitle">
         Monitor the team's active workload and completed score.
       </p>
     </div>
 
     <!-- Completed-score period filter. -->
-    <div style="background: #ffffff; padding: 8px 14px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
-      <label for="period_select" style="font-weight: 600; font-size: 0.9em; margin: 0;">Score Period:</label>
+    <div class="tw-period-box">
+      <label for="period_select">Score Period:</label>
       <form method="get" action="<%= url_for(controller: 'task_weights', action: 'index', project_id: @project) %>" style="margin: 0;">
 
         <%= select_tag 'period', options_for_select([
@@ -125,8 +209,7 @@
               ['This Year', 'this_year'],
               ['All Time', 'all_time']
             ], @period),
-            onchange: 'this.form.submit();',
-            style: 'padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.9em; background: #fff;' %>
+            onchange: 'this.form.submit();' %>
       </form>
     </div>
   </div>
@@ -135,13 +218,13 @@
   <div class="tw-kpi-grid">
     <div class="tw-kpi-card">
       <div class="kpi-label">📦 Total Pending Workload</div>
-      <div class="kpi-value"><%= @total_open_weight %> <span style="font-size: 0.55em; color: #64748b;">pts</span></div>
+      <div class="kpi-value"><%= @total_open_weight %> <span class="kpi-unit">pts</span></div>
       <div class="kpi-sub"><%= @total_open_issues %> open issues in the queue</div>
     </div>
 
     <div class="tw-kpi-card">
       <div class="kpi-label">⚖️ Average / Assignee</div>
-      <div class="kpi-value"><%= @avg_open_weight_per_user %> <span style="font-size: 0.55em; color: #64748b;">pts</span></div>
+      <div class="kpi-value"><%= @avg_open_weight_per_user %> <span class="kpi-unit">pts</span></div>
       <div class="kpi-sub"><%= @active_user_count %> assignees with active work</div>
     </div>
 
@@ -159,9 +242,9 @@
       </div>
     </div>
 
-    <div class="tw-kpi-card" style="border-left: 4px solid #10b981;">
-      <div class="kpi-label" style="color: #047857;">🏆 Completed Score (<%= @period == 'this_month' ? 'This Month' : (@period == 'last_30_days' ? 'Last 30 Days' : (@period == 'this_year' ? 'This Year' : 'All Time')) %>)</div>
-      <div class="kpi-value" style="color: #047857;"><%= @total_closed_weight %> <span style="font-size: 0.55em; color: #047857;">pts</span></div>
+    <div class="tw-kpi-card tw-kpi-success">
+      <div class="kpi-label">🏆 Completed Score (<%= @period == 'this_month' ? 'This Month' : (@period == 'last_30_days' ? 'Last 30 Days' : (@period == 'this_year' ? 'This Year' : 'All Time')) %>)</div>
+      <div class="kpi-value"><%= @total_closed_weight %> <span class="kpi-unit">pts</span></div>
       <div class="kpi-sub"><%= @total_closed_issues %> completed issues</div>
     </div>
   </div>
@@ -173,10 +256,10 @@
         <thead>
           <tr>
             <th>Assignee / User</th>
-            <th style="text-align: center; width: 120px;">Open Issues</th>
-            <th style="text-align: right; width: 130px;">Pending Weight</th>
-            <th style="text-align: left; width: 250px;">Distribution (% Workload)</th>
-            <th style="text-align: right; width: 180px;">🏆 Completed Score</th>
+            <th class="tw-cell-center" style="width: 120px;">Open Issues</th>
+            <th class="tw-cell-right" style="width: 130px;">Pending Weight</th>
+            <th style="width: 250px;">Distribution (% Workload)</th>
+            <th class="tw-cell-right" style="width: 180px;">🏆 Completed Score</th>
           </tr>
         </thead>
         <tbody>
@@ -192,32 +275,32 @@
             <% 
               pct = @total_open_weight > 0 ? (stats[:open_weight] / @total_open_weight * 100).round(1) : 0.0
               
-              # Dynamic color thresholds for the progress bar.
-              bar_color = if pct >= 35.0
-                            '#ef4444' # Red: overloaded (> 35% of the project workload).
+              # Color thresholds for the progress bar (mapped to theme tokens).
+              bar_class = if pct >= 35.0
+                            'tw-bar-danger'  # Red: overloaded (> 35% of the project workload).
                           elsif pct >= 20.0
-                            '#f59e0b' # Amber: medium-high workload (20%-35%).
+                            'tw-bar-warning' # Amber: medium-high workload (20%-35%).
                           elsif pct > 0
-                            '#10b981' # Green: balanced workload (< 20%).
+                            'tw-bar-success' # Green: balanced workload (< 20%).
                           else
-                            '#94a3b8' # Gray: no active workload.
+                            'tw-bar-muted'   # Gray: no active workload.
                           end
             %>
             <tr>
               <td><strong><%= user_name %></strong></td>
-              <td style="text-align: center;"><%= stats[:open_count] %></td>
-              <td style="text-align: right; font-weight: 600; color: #0f172a;"><%= stats[:open_weight].round(1) %> pts</td>
+              <td class="tw-cell-center"><%= stats[:open_count] %></td>
+              <td class="tw-cell-right tw-cell-strong"><%= stats[:open_weight].round(1) %> pts</td>
               <td>
                 <div class="tw-progress-wrapper">
-                  <span style="font-size: 0.88em; font-weight: 600; min-width: 42px; text-align: right; color: <%= bar_color %>;"><%= pct %>%</span>
+                  <span class="tw-pct <%= bar_class %>"><%= pct %>%</span>
                   <div class="tw-progress-bg">
-                    <div class="tw-progress-fill" style="width: <%= [pct, 100].min %>%; background-color: <%= bar_color %>;"></div>
+                    <div class="tw-progress-fill <%= bar_class %>" style="width: <%= [pct, 100].min %>%;"></div>
                   </div>
                 </div>
               </td>
-              <td style="text-align: right;">
-                <span style="font-weight: 700; color: #047857;"><%= stats[:closed_weight].round(1) %> pts</span>
-                <span style="font-size: 0.8em; color: #64748b;">(<%= stats[:closed_count] %> closed)</span>
+              <td class="tw-cell-right">
+                <span class="tw-cell-success"><%= stats[:closed_weight].round(1) %> pts</span>
+                <span class="tw-cell-success-sub">(<%= stats[:closed_count] %> closed)</span>
               </td>
             </tr>
           <% end %>
@@ -225,15 +308,15 @@
         <tfoot>
           <tr>
             <td>PROJECT TOTAL</td>
-            <td style="text-align: center;"><%= @total_open_issues %></td>
-            <td style="text-align: right;"><%= @total_open_weight %> pts</td>
+            <td class="tw-cell-center"><%= @total_open_issues %></td>
+            <td class="tw-cell-right"><%= @total_open_weight %> pts</td>
             <td>100% Active Workload</td>
-            <td style="text-align: right; color: #047857;"><%= @total_closed_weight %> pts (<%= @total_closed_issues %> closed)</td>
+            <td class="tw-cell-right tw-cell-success"><%= @total_closed_weight %> pts (<%= @total_closed_issues %> closed)</td>
           </tr>
         </tfoot>
       </table>
     <% else %>
-      <p style="color: #94a3b8; text-align: center; padding: 20px 0; margin: 0;">No issues were found in this project.</p>
+      <p class="tw-empty">No issues were found in this project.</p>
     <% end %>
   </div>
 </div>
